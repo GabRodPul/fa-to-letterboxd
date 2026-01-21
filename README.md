@@ -11,7 +11,7 @@ A simple webscraping tool to convert a FilmAffinity profile to Letterboxd's impo
 > Add how to install using `cargo`
 
 ### Using provided binaries
-> [!TODO]
+> [!NOTE] TODO:
 > Add how to install using provided binaries
 
 
