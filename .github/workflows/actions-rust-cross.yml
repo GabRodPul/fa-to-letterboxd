@@ -1,5 +1,5 @@
 name: Cross Compilation
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+run-name: Cross Compilation for Linux, Windows and MacOS
 on: [push]
 jobs:
   release:
