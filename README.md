@@ -31,14 +31,14 @@ filmaffinity-to-letterboxd -u <user_id>
 
 
 - Once you have your file ready (by default, saved as `fa-to-letterboxd-result.csv`), head to [Letterboxd's Import page](https://letterboxd.com/import/) and upload it by clicking "SELECT A FILE". It'll take a while to process it all.
-<img width="1026" height="513" alt="image" src="https://github.com/user-attachments/assets/e9ffdf8b-b25a-4239-8223-c24ce02cf226" />
-<img width="677" height="312" alt="image" src="https://github.com/user-attachments/assets/096f17ee-bf8e-42b2-9fbb-85d647629a14" />
+<p align="center"><img width="1026" height="513" alt="image" src="https://github.com/user-attachments/assets/e9ffdf8b-b25a-4239-8223-c24ce02cf226" /></p>
+<p align="center"><img width="677" height="312" alt="image" src="https://github.com/user-attachments/assets/096f17ee-bf8e-42b2-9fbb-85d647629a14"  /></p>
 
 - When finished, you'll be redirected to a page where you can confirm the export. To reduce the number of entries on screen, click "Hide successful matches".
-<img width="1006" height="747" alt="image" src="https://github.com/user-attachments/assets/91b57232-4e9e-4769-a8ae-30f46f93919f" />
-<img width="972" height="184" alt="image" src="https://github.com/user-attachments/assets/012b1e1b-c398-4bce-8466-278024982472" />
+<p align="center"><img width="1006" height="747" alt="image" src="https://github.com/user-attachments/assets/91b57232-4e9e-4769-a8ae-30f46f93919f" /></p>
+<p align="center"><img width="972" height="184" alt="image" src="https://github.com/user-attachments/assets/012b1e1b-c398-4bce-8466-278024982472"  /></p>
 
 > [!WARNING]
 > When importing, not all entries will get exported. This may be due to an entry having a different name in Letterboxd or it's not there (series or individual chapters from series are usually the ones missing).
 > TODO: Add some sort of table for title conversions/pattern matching.
-<img width="972" height="539" alt="image" src="https://github.com/user-attachments/assets/2facc8fa-9267-4d80-a865-429c055e6b1c" />
+<p align="center"><img width="972" height="539" alt="image" src="https://github.com/user-attachments/assets/2facc8fa-9267-4d80-a865-429c055e6b1c" /></p>
