@@ -6,21 +6,29 @@ A simple webscraping tool to convert a FilmAffinity profile to Letterboxd's impo
 
 ## Installation
 ### Using cargo
-> [!NOTE]
-> TODO: Add how to install using `cargo`
+- Simply run:
+```
+cargo install fa-to-letterboxd
+```
 
-### Using provided binaries
-> [!NOTE]
-> TODO: Add how to install using provided binaries
-
+### Using pre-compiled binaries
+- Go to the [latest release](https://github.com/GabRodPul/fa-to-letterboxd/releases/latest).
+- Select your platform (Windows, macOS, different Linux architectures/libc implementations).
+- Download and extract the executable.
 
 ## Usage
 - Go to your FilmAffinity profile and copy your user ID number from the link.
 <p align="center"><img width="652" height="46" alt="image" src="https://github.com/user-attachments/assets/371fd33b-db90-4035-8cc5-2bc86ee52ff9"   /></p>
 
-- Run the program, specifying at least user ID (`-u`). Wait for it to complete. By default, it'll fetch up to 1000 pages of content. If by any case, you have more, add `-p <page_count>`. For the full list of flags, run `filmaffinity-to-letterboxd -h`.
+- Run the program, specifying at least user ID (`-u`). Wait for it to complete. By default, it'll fetch up to 1000 pages of content. If by any case, you have more, add `-p <page_count>`. For the full list of flags, run `filmaffinity-to-letterboxd -h`. If using a pre-compiled binary, remember to add `./` right next to the program's name on UNIX or appending `.exe` to the program's name if using Windows.
 ```
 filmaffinity-to-letterboxd -u <user_id>
+```
+```
+./filmaffinity-to-letterboxd -u <user_id>
+```
+```
+filmaffinity-to-letterboxd.exe -u <user_id>
 ```
 
 > [!WARNING]
