@@ -1,10 +1,10 @@
-# filmaffinity-to-letterboxd
-A simple webscraping tool to convert a FilmAffinity profile to Letterboxd's import format.
+# fa-to-letterboxd
+A simple webscraping tool to convert a FilmAffinity profile to Letterboxd's import format. Inspired by [fa-scraper](https://github.com/mx-psi/fa-scraper/).
 
 ## Requirements
 - Rust (in case you want to install using `cargo`).
 
-## How to install
+## Installation
 ### Using cargo
 > [!NOTE]
 > TODO: Add how to install using `cargo`
@@ -14,7 +14,7 @@ A simple webscraping tool to convert a FilmAffinity profile to Letterboxd's impo
 > TODO: Add how to install using provided binaries
 
 
-## How to use
+## Usage
 - Go to your FilmAffinity profile and copy your user ID number from the link.
 <p align="center"><img width="652" height="46" alt="image" src="https://github.com/user-attachments/assets/371fd33b-db90-4035-8cc5-2bc86ee52ff9"   /></p>
 
