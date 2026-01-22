@@ -18,6 +18,8 @@ clap = { version = "4.5.54", features = ["derive"] }
 chaser-oxide = "0.1.0"
 futures = "0.3.31"
 fastrand = "2.3.0"
+anyhow = "1.0.100"
+fancy-log = "0.1.1"
 
 [profile.release]
 opt-level = 3
