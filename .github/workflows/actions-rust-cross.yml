@@ -2,12 +2,6 @@ name: Cross Compilation
 run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 on: [push]
 jobs:
-  Explore-GitHub-Actions:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-        name: Build Rust Projects with Cross
-        uses: houseabsolute/actions-rust-cross@v1jobs
   release:
     name: Release - ${{ matrix.platform.os-name }}
     strategy:
@@ -54,4 +48,4 @@ jobs:
         uses: houseabsolute/actions-rust-release@v0
         with:
           executable-name: ubi
-          target: ${{ matrix.platform.target }}.0.5
+          target: ${{ matrix.platform.target }}
