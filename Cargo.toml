@@ -1,6 +1,6 @@
 [package]
 name = "fa-to-letterboxd"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 authors = ["GabRodPul <103140108+GabRodPul@users.noreply.github.com>"]
 description = "A simple webscraping tool to convert a FilmAffinity profile to Letterboxd's import format"
