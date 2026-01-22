@@ -88,7 +88,7 @@ async fn main() {
 }
 
 async fn scrape(args: Args) -> Result<()> {
-    let base_url: &str = &format!("https://www.filmaffinity.com/en/userratings.php?user_id={}&orderby=4", args.user_id);
+    let base_url: &str = &format!("https://www.filmaffinity.com/en/userratings.php?user_id={}&orderby=rating-date", args.user_id);
     let mut data = Vec::<String>::with_capacity(50 * args.page_count);
     data.push(CSV_HEADER.to_owned());
 
@@ -141,12 +141,12 @@ async fn scrape(args: Args) -> Result<()> {
         }
         drop(text);
 
-        let entries = d.find(Class("mb-4")).skip(2).collect::<Vec<_>>();
+        let entries = d.find(Class("user-ratings-list-resp")).collect::<Vec<_>>();
         if entries.is_empty() {
             if data.is_empty() {
                 bail!(ScrapingError::StructureChange {
                     name:       "Entries", 
-                    element:    "<div class=\".. mb-4\">",
+                    element:    "<div class=\".. user-ratings-list-resp\">",
                 })
             } else { 
                 // The existence of previous data means we're getting blocked by Cloudflare
