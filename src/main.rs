@@ -269,9 +269,11 @@ async fn scrape(args: Args) -> Result<()> {
                 Some(span) => span.text(),
             };
 
-            let directors = match e.find(Class("credits")).collect::<Vec<_>>().first() {
-                None => vec![], // Some entries are uncredited // bail!(ScrapingError::StructureChange { name: "Director", element: "<span class=\".. credits\">" }),
-                Some(div) => div.find(Name("a")).map(|a| a.text()).collect::<Vec<_>>(),
+            let directors = match
+                e.find(Class("credits")).collect::<Vec<_>>().first()
+            {
+                None => vec![], // Some entries are uncredited // bail!(ScrapingError::StructureChange { name: "Director", element: "<span class=\".. credits\">"}),
+                Some(div) => div.find(Name("a")).map(|a| a.text()).collect::<Vec<_>>()
             };
 
             let rating: String = match e.find(Class("fa-user-rat-box")).collect::<Vec<_>>().first()
