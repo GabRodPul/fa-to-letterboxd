@@ -7,7 +7,7 @@ use futures::StreamExt;
 use itertools::Itertools;
 use select::{
     document::Document,
-    predicate::{Class, Name}
+    predicate::{Class, Name},
 };
 use std::{error::Error, fs, time::Duration};
 
@@ -27,7 +27,7 @@ struct Args {
     /// Output file name
     #[arg(short, long, default_value_t = String::from("fa-to-letterboxd-result.csv"))]
     output_file: String,
-    
+
     /// If true, will delay requests after HTML processing by a random value within the integral range [1, 3]
     #[arg(short('d'), long, default_value_t = true, action = ArgAction::SetFalse)]
     // TODO: Consider adding custom delay times
@@ -37,32 +37,51 @@ struct Args {
 #[derive(Debug, Clone)]
 enum ScrapingError {
     UserNotFound(u32),
-    StructureChange { name: &'static str, element: &'static str },
-    Cloudflare
+    StructureChange {
+        name: &'static str,
+        element: &'static str,
+    },
+    Cloudflare,
 }
 
 impl fmt::Display for ScrapingError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::UserNotFound(id) => write!(f, "{}", format!("User with id {} not found", id)),
-            Self::StructureChange{ name, element } 
-                => write!(f, "{}", format!("{}: '{}' not found — FilmAffinity's HTML structure has changed", name, element)),
-            Self::Cloudflare 
-                => write!(f, "WebDriver is being blocked by Cloudflare")
+            Self::StructureChange { name, element } => write!(
+                f,
+                "{}",
+                format!(
+                    "{}: '{}' not found — FilmAffinity's HTML structure has changed",
+                    name, element
+                )
+            ),
+            Self::Cloudflare => write!(f, "WebDriver is being blocked by Cloudflare"),
         }
     }
 }
 
-impl Error for ScrapingError { }
-
+impl Error for ScrapingError {}
 
 // Fn's
-const CSV_HEADER: &str = "Title,Year,Directors,Rating10";
+const CSV_HEADER: &str = "Title,Year,Directors,Rating10,WatchedDate";
 fn save_csv(data: Vec<String>, out_str: &str) {
-    if let Some(d) = data.last() && d != CSV_HEADER {
-        log(LogLevel::Info, &format!("[INFO] Saving a total of {} entries in '{}'", data.len()-1, out_str));
+    if let Some(d) = data.last()
+        && d != CSV_HEADER
+    {
+        log(
+            LogLevel::Info,
+            &format!(
+                "[INFO] Saving a total of {} entries in '{}'",
+                data.len() - 1,
+                out_str
+            ),
+        );
     } else {
-        log(LogLevel::Info, "[INFO] Data empty when saving .csv - file will be written anyway.");
+        log(
+            LogLevel::Info,
+            "[INFO] Data empty when saving .csv - file will be written anyway.",
+        );
     }
 
     let mut content = String::with_capacity(10000);
@@ -71,10 +90,7 @@ fn save_csv(data: Vec<String>, out_str: &str) {
         content.push('\n');
     }
 
-    fs::write(
-        std::path::Path::new(out_str),
-        content
-    ).unwrap();
+    fs::write(std::path::Path::new(out_str), content).unwrap();
 }
 
 #[tokio::main]
@@ -83,12 +99,15 @@ async fn main() {
     set_log_level(LogLevel::Info);
     match scrape(args).await {
         Err(e) => log(LogLevel::Error, &format!("[ERROR] {}", e)),
-        _      => ()
+        _ => (),
     }
 }
 
 async fn scrape(args: Args) -> Result<()> {
-    let base_url: &str = &format!("https://www.filmaffinity.com/en/userratings.php?user_id={}&orderby=rating-date", args.user_id);
+    let base_url: &str = &format!(
+        "https://www.filmaffinity.com/en/userratings.php?user_id={}&orderby=rating-date",
+        args.user_id
+    );
     let mut data = Vec::<String>::with_capacity(50 * args.page_count);
     data.push(CSV_HEADER.to_owned());
 
@@ -96,20 +115,32 @@ async fn scrape(args: Args) -> Result<()> {
     // Plain HTML requests won't work
     let profile = ChaserProfile::windows().build();
     let (browser, mut handler) = Browser::launch(
-        BrowserConfig::builder().new_headless_mode().build().unwrap()
-    ).await.unwrap();
+        BrowserConfig::builder()
+            .new_headless_mode()
+            .build()
+            .unwrap(),
+    )
+    .await
+    .unwrap();
 
-    tokio::spawn(async move {
-        while let Some(_) = handler.next().await {}
-    });
+    tokio::spawn(async move { while let Some(_) = handler.next().await {} });
 
     let c = ChaserPage::new(browser.new_page("about:blank").await.unwrap());
     c.apply_profile(&profile).await.unwrap();
 
     let delays: Vec<u8> = if args.use_delay {
-        log(LogLevel::Warn, "[WARNING] DELAY: The app will delay the next request after processing all data by a random integral range of [1, 3]");
-        log(LogLevel::Warn, "[WARNING] DELAY: Although as far as testing goes, no delay hasn't caused any issues, better to be safe than sorry");
-        log(LogLevel::Warn, "[WARNING] DELAY: To disable it, add '-d' to the flags");
+        log(
+            LogLevel::Warn,
+            "[WARNING] DELAY: The app will delay the next request after processing all data by a random integral range of [1, 3]",
+        );
+        log(
+            LogLevel::Warn,
+            "[WARNING] DELAY: Although as far as testing goes, no delay hasn't caused any issues, better to be safe than sorry",
+        );
+        log(
+            LogLevel::Warn,
+            "[WARNING] DELAY: To disable it, add '-d' to the flags",
+        );
 
         let mut rng = fastrand::Rng::new();
         std::iter::repeat_with(|| rng.u8(1..=3))
@@ -118,11 +149,19 @@ async fn scrape(args: Args) -> Result<()> {
     } else {
         vec![]
     };
-    
+
+    // 50 movies for each page
+    let mut dates = Vec::<(String, isize)>::with_capacity(50);
     for p in 1..=args.page_count {
         let url = format!("{}&p={}&chv=list", base_url, p);
-        log(LogLevel::Info, &format!("[INFO] Processing page nº{:>4} for user {}: {}", p, args.user_id, url));
-        
+        log(
+            LogLevel::Info,
+            &format!(
+                "[INFO] Processing page nº{:>4} for user {}: {}",
+                p, args.user_id, url
+            ),
+        );
+
         c.goto(&url).await.unwrap();
         let text: String = c.content().await?;
 
@@ -131,52 +170,100 @@ async fn scrape(args: Args) -> Result<()> {
             if p == 1 {
                 bail!(ScrapingError::UserNotFound(args.user_id))
             } else {
-                log(LogLevel::Warn, &format!("[WARNING] Page nº {} not found; max 'page_count' was {}{}", p, args.page_count, 
-                    if args.page_count == DEF_PAGE_COUNT { " (default)" } else { "" }
-                ));
+                log(
+                    LogLevel::Warn,
+                    &format!(
+                        "[WARNING] Page nº {} not found; max 'page_count' was {}{}",
+                        p,
+                        args.page_count,
+                        if args.page_count == DEF_PAGE_COUNT {
+                            " (default)"
+                        } else {
+                            ""
+                        }
+                    ),
+                );
 
                 save_csv(data, &args.output_file);
-                return Ok(())
+                return Ok(());
             }
         }
         drop(text);
 
-        let entries = d.find(Class("user-ratings-list-resp")).collect::<Vec<_>>();
+        // TODO: Test this more thoroughly (results seem similar at first glance)
+        // Process dates first & counts first
+        let fa_content_cards = d.find(Class("fa-content-card"));
+        for cc in fa_content_cards {
+            let date = match cc.find(Class("card-header")).last() {
+                None => bail!(ScrapingError::StructureChange {
+                    name: "Date",
+                    element: "<div class=\".. card-header\">"
+                }),
+                Some(date) => {
+                    let date_t = &date.text();
+                    let date_parts = date_t["Rated ".len()..].split(" ").collect::<Vec<_>>();
+                    let year = date_parts[2];
+                    let month = [
+                        "January",
+                        "February",
+                        "March",
+                        "April",
+                        "May",
+                        "June",
+                        "July",
+                        "August",
+                        "September",
+                        "October",
+                        "November",
+                        "December",
+                    ]
+                    .iter()
+                    .position(|m| m == &date_parts[0])
+                    .unwrap()
+                        + 1;
+                    let day = &date_parts[1][..date_parts[1].len() - 1]; // Ignore comma
+
+                    format!("{}-{:0>2}-{:0>2}", year, month, day)
+                }
+            };
+
+            let entry_count = cc.find(Class("mb-4")).count() as isize;
+            dates.push((date, entry_count));
+        }
+
+        let entries = d.find(Class("mb-4")).skip(2).collect::<Vec<_>>();
         if entries.is_empty() {
             if data.is_empty() {
                 bail!(ScrapingError::StructureChange {
-                    name:       "Entries", 
-                    element:    "<div class=\".. user-ratings-list-resp\">",
+                    name: "Entries",
+                    element: "<div class=\".. mb-4\">",
                 })
-            } else { 
+            } else {
                 // The existence of previous data means we're getting blocked by Cloudflare
                 bail!(ScrapingError::Cloudflare)
             }
         }
 
+        // Process each entry, taking dates into account
+        let mut dates_idx = 0;
         for e in entries {
-            let title = match
-                e.find(Class("mc-title")).collect::<Vec<_>>().first()
-            {
-                None => bail!(ScrapingError::StructureChange { 
-                    name:    "Title", 
-                    element: "<div class=\".. mc-title\">" 
+            let title = match e.find(Class("mc-title")).collect::<Vec<_>>().first() {
+                None => bail!(ScrapingError::StructureChange {
+                    name: "Title",
+                    element: "<div class=\".. mc-title\">"
                 }),
-                Some(div) =>
-                    match div.find(Class("d-md-none")).collect::<Vec<_>>().first() {
-                        None => bail!(ScrapingError::StructureChange { 
-                            name:    "Title", 
-                            element: "<a class=\".. d-md-none\">" 
-                        }),
-                        Some(a) => a.text(),
-                    }
+                Some(div) => match div.find(Class("d-md-none")).collect::<Vec<_>>().first() {
+                    None => bail!(ScrapingError::StructureChange {
+                        name: "Title",
+                        element: "<a class=\".. d-md-none\">"
+                    }),
+                    Some(a) => a.text(),
+                },
             };
 
-            let year = match
-                e.find(Class("mc-year")).collect::<Vec<_>>().first()
-            {
-                None => bail!(ScrapingError::StructureChange { 
-                    name:    "Year", 
+            let year = match e.find(Class("mc-year")).collect::<Vec<_>>().first() {
+                None => bail!(ScrapingError::StructureChange {
+                    name: "Year",
                     element: "<span class=\".. mc-year\">"
                 }),
                 Some(span) => span.text(),
@@ -189,32 +276,38 @@ async fn scrape(args: Args) -> Result<()> {
                 Some(div) => div.find(Name("a")).map(|a| a.text()).collect::<Vec<_>>()
             };
 
-            let rating: String = match
-                e.find(Class("fa-user-rat-box")).collect::<Vec<_>>().first()
+            let rating: String = match e.find(Class("fa-user-rat-box")).collect::<Vec<_>>().first()
             {
                 None => bail!(ScrapingError::StructureChange {
-                    name:    "Rating", 
-                    element: "<span class=\".. fa-user-rat-box\">" 
+                    name: "Rating",
+                    element: "<div class=\".. fa-user-rat-box\">"
                 }),
                 Some(div) => match div.text().trim().parse::<i32>() {
-                    Err(_) => {
-                        "".to_owned()
-                    },
-                    Ok(f) => (f).to_string()
+                    Err(_) => "".to_owned(),
+                    Ok(f) => (f).to_string(),
                 },
             };
 
-            data.push(format!("\"{}\",{},\"{}\",{}",
-                              title,
-                              year,
-                              directors.iter().format(","),
-                              rating
+            data.push(format!(
+                "\"{}\",{},\"{}\",{},{}",
+                title,
+                year,
+                directors.iter().format(","),
+                rating,
+                &dates[dates_idx].0
             ));
+
+            dates[dates_idx].1 -= 1;
+            if dates[dates_idx].1 == 0 {
+                dates_idx += 1;
+            }
         }
 
         if args.use_delay {
-            std::thread::sleep(Duration::from_secs(delays[p-1] as u64));
+            std::thread::sleep(Duration::from_secs(delays[p - 1] as u64));
         }
+
+        dates.clear();
     }
 
     save_csv(data, &args.output_file);
