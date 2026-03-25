@@ -150,6 +150,8 @@ async fn scrape(args: Args) -> Result<()> {
         vec![]
     };
 
+    // 50 movies for each page
+    let mut dates = Vec::<(String, isize)>::with_capacity(50);
     for p in 1..=args.page_count {
         let url = format!("{}&p={}&chv=list", base_url, p);
         log(
@@ -188,95 +190,122 @@ async fn scrape(args: Args) -> Result<()> {
         }
         drop(text);
 
-        // TODO: Iterating each date is extremely slow, but will work for now.
-        let fa_content_cards = d.find(Class("fa-content-card")).collect::<Vec<_>>();
+        // TODO: Test this more thoroughly (results seem similar at first glance)
+        // Process dates first & counts first
+        let fa_content_cards = d.find(Class("fa-content-card"));
         for cc in fa_content_cards {
-            let date    = match cc.find(Class("card-header")).last() {
-                None    => bail!(ScrapingError::StructureChange { name: "Date", element: "<div class=\".. card-header\">" }),
+            let date = match cc.find(Class("card-header")).last() {
+                None => bail!(ScrapingError::StructureChange {
+                    name: "Date",
+                    element: "<div class=\".. card-header\">"
+                }),
                 Some(date) => {
-                    let date_t     = &date.text();
+                    let date_t = &date.text();
                     let date_parts = date_t["Rated ".len()..].split(" ").collect::<Vec<_>>();
-                    let year    = date_parts[2];
-                    let month   = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-                        .iter().position(|m| m == &date_parts[0]).unwrap() + 1;
-                    let day     = &date_parts[1][..date_parts[1].len()-1]; // Ignore comma
-            
+                    let year = date_parts[2];
+                    let month = [
+                        "January",
+                        "February",
+                        "March",
+                        "April",
+                        "May",
+                        "June",
+                        "July",
+                        "August",
+                        "September",
+                        "October",
+                        "November",
+                        "December",
+                    ]
+                    .iter()
+                    .position(|m| m == &date_parts[0])
+                    .unwrap()
+                        + 1;
+                    let day = &date_parts[1][..date_parts[1].len() - 1]; // Ignore comma
+
                     format!("{}-{:0>2}-{:0>2}", year, month, day)
                 }
             };
-            
-            let entries = cc.find(Class("mb-4")).collect::<Vec<_>>();
-            // println!("{}: {}", date, entries.len());
 
-            if entries.is_empty() {
-                if data.is_empty() {
-                    bail!(ScrapingError::StructureChange {
-                        name: "Entries",
-                        element: "<div class=\".. user-ratings-list-resp\">",
-                    })
-                } else {
-                    // The existence of previous data means we're getting blocked by Cloudflare
-                    bail!(ScrapingError::Cloudflare)
-                }
-            }
+            let entry_count = cc.find(Class("mb-4")).count() as isize;
+            dates.push((date, entry_count));
+        }
 
-            for e in entries {
-                let title = match e.find(Class("mc-title")).collect::<Vec<_>>().first() {
-                    None => bail!(ScrapingError::StructureChange {
-                        name: "Title",
-                        element: "<div class=\".. mc-title\">"
-                    }),
-                    Some(div) => match div.find(Class("d-md-none")).collect::<Vec<_>>().first() {
-                        None => bail!(ScrapingError::StructureChange {
-                            name: "Title",
-                            element: "<a class=\".. d-md-none\">"
-                        }),
-                        Some(a) => a.text(),
-                    },
-                };
-
-                let year = match e.find(Class("mc-year")).collect::<Vec<_>>().first() {
-                    None => bail!(ScrapingError::StructureChange {
-                        name: "Year",
-                        element: "<span class=\".. mc-year\">"
-                    }),
-                    Some(span) => span.text(),
-                };
-
-                let directors = match e.find(Class("credits")).collect::<Vec<_>>().first() {
-                    None => bail!(ScrapingError::StructureChange {
-                        name: "Director",
-                        element: "<span class=\".. credits\">"
-                    }),
-                    Some(div) => div.find(Name("a")).map(|a| a.text()).collect::<Vec<_>>(),
-                };
-
-                let rating: String =
-                    match e.find(Class("fa-user-rat-box")).collect::<Vec<_>>().first() {
-                        None => bail!(ScrapingError::StructureChange {
-                            name: "Rating",
-                            element: "<div class=\".. fa-user-rat-box\">"
-                        }),
-                        Some(div) => match div.text().trim().parse::<i32>() {
-                            Err(_) => "".to_owned(),
-                            Ok(f) => (f).to_string(),
-                        },
-                    };
-
-                data.push(format!(
-                    "\"{}\",{},\"{}\",{},{}",
-                    title,
-                    year,
-                    directors.iter().format(","),
-                    rating,
-                    date
-                ));
-            }
-
-            if args.use_delay {
-                std::thread::sleep(Duration::from_secs(delays[p - 1] as u64));
+        let entries = d.find(Class("mb-4")).skip(2).collect::<Vec<_>>();
+        if entries.is_empty() {
+            if data.is_empty() {
+                bail!(ScrapingError::StructureChange {
+                    name: "Entries",
+                    element: "<div class=\".. mb-4\">",
+                })
+            } else {
+                // The existence of previous data means we're getting blocked by Cloudflare
+                bail!(ScrapingError::Cloudflare)
             }
         }
+
+        // Process each entry, taking dates into account
+        let mut dates_idx = 0;
+        for e in entries {
+            let title = match e.find(Class("mc-title")).collect::<Vec<_>>().first() {
+                None => bail!(ScrapingError::StructureChange {
+                    name: "Title",
+                    element: "<div class=\".. mc-title\">"
+                }),
+                Some(div) => match div.find(Class("d-md-none")).collect::<Vec<_>>().first() {
+                    None => bail!(ScrapingError::StructureChange {
+                        name: "Title",
+                        element: "<a class=\".. d-md-none\">"
+                    }),
+                    Some(a) => a.text(),
+                },
+            };
+
+            let year = match e.find(Class("mc-year")).collect::<Vec<_>>().first() {
+                None => bail!(ScrapingError::StructureChange {
+                    name: "Year",
+                    element: "<span class=\".. mc-year\">"
+                }),
+                Some(span) => span.text(),
+            };
+
+            let directors = match e.find(Class("credits")).collect::<Vec<_>>().first() {
+                None => vec!["".to_owned()], // Some entries are uncredited // bail!(ScrapingError::StructureChange { name: "Director", element: "<span class=\".. credits\">" }),
+                Some(div) => div.find(Name("a")).map(|a| a.text()).collect::<Vec<_>>(),
+            };
+
+            let rating: String = match e.find(Class("fa-user-rat-box")).collect::<Vec<_>>().first()
+            {
+                None => bail!(ScrapingError::StructureChange {
+                    name: "Rating",
+                    element: "<div class=\".. fa-user-rat-box\">"
+                }),
+                Some(div) => match div.text().trim().parse::<i32>() {
+                    Err(_) => "".to_owned(),
+                    Ok(f) => (f).to_string(),
+                },
+            };
+
+            data.push(format!(
+                "\"{}\",{},\"{}\",{},{}",
+                title,
+                year,
+                directors.iter().format(","),
+                rating,
+                &dates[dates_idx].0
+            ));
+
+            dates[dates_idx].1 -= 1;
+            if dates[dates_idx].1 == 0 {
+                dates_idx += 1;
+            }
+        }
+
+        if args.use_delay {
+            std::thread::sleep(Duration::from_secs(delays[p - 1] as u64));
+        }
+
+        dates.clear();
     }
 
     save_csv(data, &args.output_file);
