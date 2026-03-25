@@ -45,6 +45,7 @@ filmaffinity-to-letterboxd.exe -u <user_id>
 - When finished, you'll be redirected to a page where you can confirm the export. To reduce the number of entries on screen, click "Hide successful matches".
 <p align="center"><img width="1006" height="747" alt="image" src="https://github.com/user-attachments/assets/91b57232-4e9e-4769-a8ae-30f46f93919f" /></p>
 <p align="center"><img width="1285" height="285" alt="image" src="https://github.com/user-attachments/assets/fe0a65ea-5dd1-4e29-818e-8a0c65b6ea4e" /></p>
+
 > [!WARNING]
 > When importing, not all entries will get exported. This may be due to an entry having a different name in Letterboxd or it's not there (series or individual chapters from series are usually the ones missing).
 > TODO: Add some sort of table for title conversions/pattern matching. Maybe ignoring anything that's not a film and storing a separate .csv for those will work, too.
