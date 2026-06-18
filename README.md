@@ -17,6 +17,7 @@ cargo install fa-to-letterboxd
 - Download and extract the executable.
 
 ## Usage
+### Obtaining your FilmAffinity data
 - Go to your FilmAffinity profile and copy your user ID number from the link.
 <p align="center"><img width="652" height="46" alt="image" src="https://github.com/user-attachments/assets/371fd33b-db90-4035-8cc5-2bc86ee52ff9"   /></p>
 
@@ -38,6 +39,7 @@ filmaffinity-to-letterboxd.exe -u <user_id>
 <img width="1472" height="524" alt="image" src="https://github.com/user-attachments/assets/957f8188-3af7-46a9-b58e-766b8a40ee6a" />
 
 
+### Importing into Letterboxd
 - Once you have your file ready (by default, saved as `fa-to-letterboxd-result.csv`), head to [Letterboxd's Import page](https://letterboxd.com/import/) and upload it by clicking "SELECT A FILE". It'll take a while to process it all.
 <p align="center"><img width="1026" height="513" alt="image" src="https://github.com/user-attachments/assets/e9ffdf8b-b25a-4239-8223-c24ce02cf226" /></p>
 <p align="center"><img width="677" height="312" alt="image" src="https://github.com/user-attachments/assets/096f17ee-bf8e-42b2-9fbb-85d647629a14"  /></p>
